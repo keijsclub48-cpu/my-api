@@ -1,38 +1,41 @@
-﻿const express = require('express');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+﻿import express from "express";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import scoreHandler from "./api/score.js";
 
-const scoreHandler = require('./api/score').default;
+dotenv.config();
 
 const app = express();
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10mb" }));
 
-// CORS（ローカルのみ想定。本番では不要）
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://app.voca-nical.com",
+];
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
-// 🔐 APIキー認証ミドルウェア
-app.use('/api', (req, res, next) => {
+// APIキー認証
+app.use("/api", (req, res, next) => {
+  if (!process.env.API_KEY) return next();
   const auth = req.headers.authorization;
-  if (!process.env.API_KEY) {
-    console.warn('⚠ API_KEY 未設定（開発モード）');
-    return next();
-  }
   if (auth !== `Bearer ${process.env.API_KEY}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 });
 
-// パスを /api/score に統一
-app.post('/api/score', (req, res) => scoreHandler(req, res));
+app.post("/api/score", scoreHandler);
 
 app.listen(3000, () => {
-  console.log('APIローカルサーバー起動: http://localhost:3000');
-  console.log('POST http://localhost:3000/api/score');
+  console.log("API起動 http://localhost:3000/api/score");
 });
