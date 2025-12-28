@@ -1,16 +1,16 @@
 ﻿import express from "express";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import scoreHandler from "./api/score.js";
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
 
+// CORS 設定
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://app.voca-nical.com",
+  "http://localhost:5173",        // Vite dev
+  "https://app.voca-nical.com",   // 本番フロント
 ];
 
 app.use((req, res, next) => {
@@ -18,24 +18,29 @@ app.use((req, res, next) => {
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
 
-// APIキー認証
-app.use("/api", (req, res, next) => {
-  if (!process.env.API_KEY) return next();
+// ダミー API
+app.post("/api/score", (req, res) => {
   const auth = req.headers.authorization;
-  if (auth !== `Bearer ${process.env.API_KEY}`) {
+  if (process.env.API_KEY && auth !== `Bearer ${process.env.API_KEY}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  next();
+
+  if (!req.body?.audio) return res.status(400).json({ error: "audio is required" });
+
+  // ダミー返却
+  res.json({
+    pitch: 440,
+    stability: 0.95,
+    score: 80
+  });
 });
 
-app.post("/api/score", scoreHandler);
-
-app.listen(3000, () => {
-  console.log("API起動 http://localhost:3000/api/score");
-});
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Server running on port ${port}`));
