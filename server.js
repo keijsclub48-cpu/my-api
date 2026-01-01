@@ -10,7 +10,8 @@ app.use(bodyParser.json({ limit: "10mb" }));
 // CORS 設定
 const allowedOrigins = [
   "http://localhost:5173",        // Vite dev
-  "https://app.voca-nical.com",   // 本番フロント
+  // "https://app.voca-nical.com",   // 本番フロント
+  "https://scan.voca-nical.com",   // 本番フロント
 ];
 
 app.use((req, res, next) => {
