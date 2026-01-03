@@ -1,7 +1,7 @@
 ﻿// api/score.js
 
 export default async function handler(req, res) {
-  const allowed = ["https://app.voca-nical.com", "http://localhost:5173"];
+  const allowed = ["https://scan.voca-nical.com", "http://localhost:5175"];
   const origin = req.headers.origin;
 
   if (allowed.includes(origin)) {
